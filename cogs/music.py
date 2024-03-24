@@ -5,6 +5,7 @@ import datetime
 import os
 
 
+
 ID = os.getenv("ID")
 KEY = os.getenv("KEY")
 
@@ -153,10 +154,6 @@ class Music(commands.Cog):
         self.bot = bot
         self.main_messages = {}
         self.main_channels = {}
-
-    @commands.Cog.listener()
-    async def on_wavelink_node_ready(self, node: wavelink.Node):
-        print(f'Node <{node.id}> is ready!')
 
 
     @commands.Cog.listener()

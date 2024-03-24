@@ -7,6 +7,8 @@ import asyncio
 import psycopg
 import wavelink
 
+from logs import CustomFormatter
+
 
 #------------------------------ VARIABLES ------------------------#
 TOKEN = os.getenv("TOKEN")
@@ -44,12 +46,12 @@ bot = Bot(command_prefix=prefix,
 
 #------------------------- LOGGING -------------------------#
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("discord")
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
 
 
 #------------------------- APP -------------------------#
@@ -59,7 +61,7 @@ logger.addHandler(handler)
 async def on_ready():
     nodes = [wavelink.Node(uri="http://localhost:2333", password="youshallnotpass")]
     await wavelink.Pool.connect(nodes=nodes, client=bot, cache_capacity=None)
-    print(f"We have logged in as {bot.user}. ")
+    logger.warning(f"We have logged in as {bot.user}. ")
     async with await psycopg.AsyncConnection.connect(DB_URI) as db:
         async with db.cursor() as cursor:
             table_query = """CREATE TABLE IF NOT EXISTS GUILD(
@@ -106,6 +108,7 @@ async def on_command_error(ctx, error: discord.DiscordException):
     embed.add_field(name=f"Error occured at `{ctx.channel.name}`, `{ctx.channel.id}`\n where guild id is `{ctx.guild.id}` and name `{ctx.guild.name}`",
                     value=f"Error:```py\n{str(error)}```\nThe command used is: ```\n{ctx.message.content}```",
                     inline=False)
+    logger.critical(str(error))
     await error_channel.send(embed=embed)      
     
 
@@ -145,7 +148,6 @@ bot.load_extension('cogs.interactions')
 bot.load_extension('cogs.moderation')
 bot.load_extension('cogs.utility')
 bot.load_extension('cogs.music')
-#bot.load_extension('cogs.IpcRoutes')
 bot.load_extension('cogs.admin')
 bot.load_extension('cogs.pages-commands')
 bot.run(TOKEN)
